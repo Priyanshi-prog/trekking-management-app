@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h2>Welcome to the Trekking Management App</h2>
+<p>
+    Register as a <a href="{{ url_for('register') }}">Trekker</a>
+    or <a href="{{ url_for('register_staff') }}">Trek Staff</a>.
+</p>
+<p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+{% endblock %}

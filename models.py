@@ -1,10 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -12,11 +13,10 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # 'admin', 'staff', 'trekker'
-    is_approved = db.Column(db.Boolean, default=False)  # relevant for staff only
+    is_approved = db.Column(db.Boolean, default=False)
     is_blacklisted = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # relationships
     staff_profile = db.relationship('StaffProfile', backref='user', uselist=False)
     bookings = db.relationship('Booking', backref='user', lazy=True)
     treks_assigned = db.relationship('Trek', backref='assigned_staff', lazy=True)
@@ -36,11 +36,11 @@ class Trek(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     location = db.Column(db.String(150))
-    difficulty = db.Column(db.String(20))  # Easy / Moderate / Hard
-    duration = db.Column(db.Integer)  # in days
+    difficulty = db.Column(db.String(20))
+    duration = db.Column(db.Integer)
     available_slots = db.Column(db.Integer, default=0)
     assigned_staff_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    status = db.Column(db.String(20), default='Pending')  # Pending/Approved/Open/Closed/Completed
+    status = db.Column(db.String(20), default='Pending')
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
 
@@ -54,4 +54,4 @@ class Booking(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     trek_id = db.Column(db.Integer, db.ForeignKey('treks.id'), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='Booked')  # Booked/Cancelled/Completed
+    status = db.Column(db.String(20), default='Booked')
