@@ -3,6 +3,7 @@ from flask import Flask
 from models import db, User, StaffProfile, Trek, Booking
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trekking.db'
@@ -143,7 +144,7 @@ def admin_dashboard():
 
     total_treks = Trek.query.count()
     total_users = User.query.filter_by(role='trekker').count()
-    total_staff = User.query.filter_by(role='staff').count()
+    total_staff = User.query.filter_by(role='staff', is_rejected=False).count()
     total_bookings = Booking.query.count()
     pending_staff = User.query.filter_by(role='staff', is_approved=False, is_rejected=False).all()
 
@@ -156,6 +157,118 @@ def admin_dashboard():
         pending_staff=pending_staff
     )
 
+
+@app.route('/manage-treks')
+@login_required
+def manage_treks():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    query = request.args.get('q', '').strip()
+
+    if query:
+        if query.isdigit():
+            treks = Trek.query.filter(Trek.id == int(query)).all()
+        else:
+            treks = Trek.query.filter(Trek.name.ilike(f'%{query}%')).all()
+    else:
+        treks = Trek.query.all()
+
+    return render_template('manage_treks.html', treks=treks)
+
+
+@app.route('/add-trek', methods=['GET', 'POST'])
+@login_required
+def add_trek():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        location = request.form['location']
+        difficulty = request.form['difficulty']
+        duration = request.form['duration']
+        available_slots = request.form['available_slots']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        assigned_staff_id = request.form.get('assigned_staff_id')
+
+        new_trek = Trek(
+            name=name,
+            location=location,
+            difficulty=difficulty,
+            duration=int(duration) if duration else None,
+            available_slots=int(available_slots),
+            assigned_staff_id=int(assigned_staff_id) if assigned_staff_id else None,
+            status='Pending',
+            start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
+            end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None
+        )
+
+        if assigned_staff_id:
+            new_trek.status = 'Approved'
+
+        db.session.add(new_trek)
+        db.session.commit()
+        flash('Trek added successfully.', 'success')
+        return redirect(url_for('manage_treks'))
+
+    approved_staff = User.query.filter_by(role='staff', is_approved=True).all()
+    return render_template('trek_form.html', trek=None, approved_staff=approved_staff)
+
+
+@app.route('/edit-trek/<int:trek_id>', methods=['GET', 'POST'])
+@login_required
+def edit_trek(trek_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    trek = db.session.get(Trek, trek_id)
+    if not trek:
+        flash('Trek not found.', 'danger')
+        return redirect(url_for('manage_treks'))
+
+    if request.method == 'POST':
+        trek.name = request.form['name']
+        trek.location = request.form['location']
+        trek.difficulty = request.form['difficulty']
+        trek.duration = int(request.form['duration']) if request.form['duration'] else None
+        trek.available_slots = int(request.form['available_slots'])
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        trek.start_date = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
+        trek.end_date = datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None
+
+        assigned_staff_id = request.form.get('assigned_staff_id')
+        trek.assigned_staff_id = int(assigned_staff_id) if assigned_staff_id else None
+
+        if assigned_staff_id and trek.status == 'Pending':
+            trek.status = 'Approved'
+
+        db.session.commit()
+        flash('Trek updated successfully.', 'success')
+        return redirect(url_for('manage_treks'))
+
+    approved_staff = User.query.filter_by(role='staff', is_approved=True).all()
+    return render_template('trek_form.html', trek=trek, approved_staff=approved_staff)
+
+@app.route('/delete-trek/<int:trek_id>', methods=['POST'])
+@login_required
+def delete_trek(trek_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    trek = db.session.get(Trek, trek_id)
+    if trek:
+        db.session.delete(trek)
+        db.session.commit()
+        flash('Trek deleted successfully.', 'info')
+
+    return redirect(url_for('manage_treks'))
 
 @app.route('/approve-staff/<int:staff_id>', methods=['POST'])
 @login_required
@@ -198,6 +311,47 @@ def staff_dashboard():
 @login_required
 def trekker_dashboard():
     return render_template('dashboard_placeholder.html')
+
+@app.route('/manage-users')
+@login_required
+def manage_users():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    query = request.args.get('q', '').strip()
+
+    if query:
+        if query.isdigit():
+            users = User.query.filter(User.id == int(query), User.role != 'admin').all()
+        else:
+            users = User.query.filter(
+                db.or_(
+                    User.name.ilike(f'%{query}%'),
+                    User.email.ilike(f'%{query}%')
+                ),
+                User.role != 'admin'
+            ).all()
+    else:
+        users = User.query.filter(User.role != 'admin').all()
+
+    return render_template('manage_users.html', users=users)
+
+@app.route('/toggle-blacklist/<int:user_id>', methods=['POST'])
+@login_required
+def toggle_blacklist(user_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    user = db.session.get(User, user_id)
+    if user and user.role != 'admin':
+        user.is_blacklisted = not user.is_blacklisted
+        db.session.commit()
+        action = 'blacklisted' if user.is_blacklisted else 'unblacklisted'
+        flash(f'{user.name} has been {action}.', 'info')
+
+    return redirect(url_for('manage_users'))
 
 @app.route('/logout')
 @login_required
