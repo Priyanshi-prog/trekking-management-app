@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask import Flask
-from models import db, User, StaffProfile
+from models import db, User, StaffProfile, Trek, Booking
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -103,11 +103,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        print(f"DEBUG - Email received: '{email}'")
-        print(f"DEBUG - Password received: '{password}'")
-
         user = User.query.filter_by(email=email).first()
-        print(f"DEBUG - User found: {user}")
 
         if not user or not check_password_hash(user.password, password):
             flash('Invalid email or password.', 'danger')
@@ -115,6 +111,10 @@ def login():
 
         if user.is_blacklisted:
             flash('Your account has been blacklisted. Contact Admin.', 'danger')
+            return redirect(url_for('login'))
+
+        if user.role == 'staff' and user.is_rejected:
+            flash('Your registration was rejected by Admin. Please contact Admin for details.', 'danger')
             return redirect(url_for('login'))
 
         if user.role == 'staff' and not user.is_approved:
@@ -134,12 +134,59 @@ def login():
     return render_template('login.html')
 
 
-
 @app.route('/admin-dashboard')
 @login_required
 def admin_dashboard():
-    return render_template('dashboard_placeholder.html')
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
 
+    total_treks = Trek.query.count()
+    total_users = User.query.filter_by(role='trekker').count()
+    total_staff = User.query.filter_by(role='staff').count()
+    total_bookings = Booking.query.count()
+    pending_staff = User.query.filter_by(role='staff', is_approved=False, is_rejected=False).all()
+
+    return render_template(
+        'admin_dashboard.html',
+        total_treks=total_treks,
+        total_users=total_users,
+        total_staff=total_staff,
+        total_bookings=total_bookings,
+        pending_staff=pending_staff
+    )
+
+
+@app.route('/approve-staff/<int:staff_id>', methods=['POST'])
+@login_required
+def approve_staff(staff_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    staff = db.session.get(User, staff_id)
+    if staff and staff.role == 'staff':
+        staff.is_approved = True
+        db.session.commit()
+        flash(f'{staff.name} has been approved.', 'success')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/reject-staff/<int:staff_id>', methods=['POST'])
+@login_required
+def reject_staff(staff_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    staff = db.session.get(User, staff_id)
+    if staff and staff.role == 'staff':
+        staff.is_rejected = True
+        db.session.commit()
+        flash(f'{staff.name} has been rejected.', 'info')
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/staff-dashboard')
 @login_required

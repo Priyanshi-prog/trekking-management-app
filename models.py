@@ -15,9 +15,10 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False)  # 'admin', 'staff', 'trekker'
     is_approved = db.Column(db.Boolean, default=False)
     is_blacklisted = db.Column(db.Boolean, default=False)
+    is_rejected = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    staff_profile = db.relationship('StaffProfile', backref='user', uselist=False)
+    staff_profile = db.relationship('StaffProfile', backref='user', uselist=False, cascade='all, delete-orphan')
     bookings = db.relationship('Booking', backref='user', lazy=True)
     treks_assigned = db.relationship('Trek', backref='assigned_staff', lazy=True)
 

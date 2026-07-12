@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+<p>Welcome, {{ current_user.name }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h5>Total Treks</h5>
+            <p class="fs-3">{{ total_treks }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h5>Total Users</h5>
+            <p class="fs-3">{{ total_users }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h5>Total Staff</h5>
+            <p class="fs-3">{{ total_staff }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h5>Total Bookings</h5>
+            <p class="fs-3">{{ total_bookings }}</p>
+        </div>
+    </div>
+</div>
+
+<hr class="mt-4">
+
+<h4>Pending Trek Staff Approvals</h4>
+{% if pending_staff %}
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for staff in pending_staff %}
+        <tr>
+            <td>{{ staff.name }}</td>
+            <td>{{ staff.email }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('approve_staff', staff_id=staff.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('reject_staff', staff_id=staff.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No pending staff approvals.</p>
+{% endif %}
+{% endblock %}
