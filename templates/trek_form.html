@@ -36,6 +36,18 @@
         <label class="form-label">End Date</label>
         <input type="date" name="end_date" class="form-control" value="{{ trek.end_date if trek else '' }}">
     </div>
+
+    <div class="mb-3">
+    <label class="form-label">Status</label>
+    <select name="status" class="form-control">
+        <option value="Pending" {% if trek and trek.status == 'Pending' %}selected{% endif %}>Pending</option>
+        <option value="Approved" {% if trek and trek.status == 'Approved' %}selected{% endif %}>Approved</option>
+        <option value="Open" {% if trek and trek.status == 'Open' %}selected{% endif %}>Open</option>
+        <option value="Closed" {% if trek and trek.status == 'Closed' %}selected{% endif %}>Closed</option>
+        <option value="Completed" {% if trek and trek.status == 'Completed' %}selected{% endif %}>Completed</option>
+    </select>
+    </div>
+
     <div class="mb-3">
     <label class="form-label">Assign Staff</label>
     <select name="assigned_staff_id" class="form-control">
