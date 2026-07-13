@@ -373,7 +373,34 @@ def staff_dashboard():
 @app.route('/trekker-dashboard')
 @login_required
 def trekker_dashboard():
-    return render_template('dashboard_placeholder.html')
+    if current_user.role != 'trekker':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    difficulty_filter = request.args.get('difficulty', '')
+    location_filter = request.args.get('location', '')
+
+    treks_query = Trek.query.filter_by(status='Open')
+
+    if difficulty_filter:
+        treks_query = treks_query.filter_by(difficulty=difficulty_filter)
+    if location_filter:
+        treks_query = treks_query.filter(Trek.location.ilike(f'%{location_filter}%'))
+
+    available_treks = treks_query.all()
+
+    my_bookings = Booking.query.filter_by(user_id=current_user.id).all()
+    booked_trek_ids = [b.trek_id for b in my_bookings if b.status == 'Booked']
+
+    return render_template(
+        'trekker_dashboard.html',
+        available_treks=available_treks,
+        booked_trek_ids=booked_trek_ids,
+        difficulty_filter=difficulty_filter,
+        location_filter=location_filter
+    )
+
+
 
 @app.route('/manage-users')
 @login_required
@@ -399,6 +426,61 @@ def manage_users():
         users = User.query.filter(User.role != 'admin').all()
 
     return render_template('manage_users.html', users=users)
+
+
+
+
+@app.route('/book-trek/<int:trek_id>', methods=['POST'])
+@login_required
+def book_trek(trek_id):
+    if current_user.role != 'trekker':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek or trek.status != 'Open':
+        flash('This trek is not open for booking.', 'danger')
+        return redirect(url_for('trekker_dashboard'))
+
+    if trek.available_slots <= 0:
+        flash('This trek is fully booked.', 'danger')
+        return redirect(url_for('trekker_dashboard'))
+
+    existing_booking = Booking.query.filter_by(
+        user_id=current_user.id, trek_id=trek.id, status='Booked'
+    ).first()
+
+    if existing_booking:
+        flash('You have already booked this trek.', 'warning')
+        return redirect(url_for('trekker_dashboard'))
+
+    new_booking = Booking(
+        user_id=current_user.id,
+        trek_id=trek.id,
+        status='Booked'
+    )
+    trek.available_slots -= 1
+
+    db.session.add(new_booking)
+    db.session.commit()
+
+    flash('Trek booked successfully!', 'success')
+    return redirect(url_for('trekker_dashboard'))
+
+
+
+@app.route('/my-bookings')
+@login_required
+def my_bookings():
+    if current_user.role != 'trekker':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    bookings = Booking.query.filter_by(user_id=current_user.id).all()
+    return render_template('my_bookings.html', bookings=bookings)
+
+
 
 @app.route('/toggle-blacklist/<int:user_id>', methods=['POST'])
 @login_required
