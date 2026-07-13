@@ -301,10 +301,73 @@ def reject_staff(staff_id):
 
     return redirect(url_for('admin_dashboard'))
 
+
+@app.route('/manage-trek-staff/<int:trek_id>', methods=['GET', 'POST'])
+@login_required
+def manage_trek_staff(trek_id):
+    if current_user.role != 'staff':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek or trek.assigned_staff_id != current_user.id:
+        flash('You are not assigned to this trek.', 'danger')
+        return redirect(url_for('staff_dashboard'))
+
+    if request.method == 'POST':
+        trek.available_slots = int(request.form['available_slots'])
+        trek.status = request.form['status']
+        db.session.commit()
+        flash('Trek updated successfully.', 'success')
+        return redirect(url_for('manage_trek_staff', trek_id=trek.id))
+
+    bookings = Booking.query.filter_by(trek_id=trek.id).all()
+    return render_template('manage_trek_staff.html', trek=trek, bookings=bookings)
+
+
+@app.route('/edit-profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'POST':
+        current_user.name = request.form['name']
+        current_user.email = request.form['email']
+
+        if current_user.role == 'staff':
+            contact_number = request.form.get('contact_number')
+            if current_user.staff_profile:
+                current_user.staff_profile.contact_number = contact_number
+            else:
+                new_profile = StaffProfile(user_id=current_user.id, contact_number=contact_number)
+                db.session.add(new_profile)
+
+        db.session.commit()
+        flash('Profile updated successfully.', 'success')
+
+        if current_user.role == 'staff':
+            return redirect(url_for('staff_dashboard'))
+        else:
+            return redirect(url_for('trekker_dashboard'))
+
+    return render_template('edit_profile.html')
+
+
+
 @app.route('/staff-dashboard')
 @login_required
 def staff_dashboard():
-    return render_template('dashboard_placeholder.html')
+    if current_user.role != 'staff':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    assigned_treks = Trek.query.filter_by(assigned_staff_id=current_user.id).all()
+
+    trek_data = []
+    for trek in assigned_treks:
+        booking_count = Booking.query.filter_by(trek_id=trek.id, status='Booked').count()
+        trek_data.append({'trek': trek, 'booking_count': booking_count})
+
+    return render_template('staff_dashboard.html', trek_data=trek_data)
 
 
 @app.route('/trekker-dashboard')

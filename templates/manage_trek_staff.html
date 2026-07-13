@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Manage Trek{% endblock %}
+
+{% block content %}
+<h2>Manage Trek: {{ trek.name }}</h2>
+<p><a href="{{ url_for('staff_dashboard') }}">Back to Dashboard</a></p>
+
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Available Slots</label>
+        <input type="number" name="available_slots" class="form-control" value="{{ trek.available_slots }}" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+            <option value="Open" {% if trek.status == 'Open' %}selected{% endif %}>Open</option>
+            <option value="Closed" {% if trek.status == 'Closed' %}selected{% endif %}>Closed</option>
+            <option value="Ongoing" {% if trek.status == 'Ongoing' %}selected{% endif %}>Ongoing</option>
+            <option value="Completed" {% if trek.status == 'Completed' %}selected{% endif %}>Completed</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>
+
+<hr class="mt-4">
+
+<h4>Registered Trekkers</h4>
+{% if bookings %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Trekker Name</th>
+            <th>Email</th>
+            <th>Booking Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for booking in bookings %}
+        <tr>
+            <td>{{ booking.user.name }}</td>
+            <td>{{ booking.user.email }}</td>
+            <td>{{ booking.booking_date.strftime('%d-%m-%Y') }}</td>
+            <td>{{ booking.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No trekkers registered for this trek yet.</p>
+{% endif %}
+{% endblock %}
