@@ -20,6 +20,10 @@ body {
     font-weight: 600;
 }
 
+.navbar > .container {
+    justify-content: center;
+}
+
 .btn-primary {
     background-color: var(--color-moss);
     border-color: var(--color-moss);
@@ -55,4 +59,14 @@ a {
 .container h2 {
     color: var(--color-bark);
     font-weight: 600;
+}
+
+.hero-wrapper {
+    background-image: url("/static/mountain-pattern.svg");
+    background-repeat: repeat-x;
+    background-position: bottom;
+    background-size: 1400px 260px;
+    text-align: center;
+    padding: 3rem 1rem;
+    margin-bottom: 2rem;
 }
