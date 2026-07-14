@@ -3,7 +3,7 @@
 
 {% block content %}
 <h2>My Bookings & Trekking History</h2>
-<p><a href="{{ url_for('trekker_dashboard') }}">Back to Dashboard</a></p>
+<p><a href="{{ url_for('trekker_dashboard') }}" class="btn btn-sm btn-outline-dark">Back to Dashboard</a></p>
 
 {% if bookings %}
 <table class="table table-bordered">
@@ -11,6 +11,8 @@
         <tr>
             <th>Trek Name</th>
             <th>Trek Dates</th>
+            <th>Trek Staff</th>
+            <th>Staff Contact</th>
             <th>Booking Date</th>
             <th>Trek Status</th>
             <th>Booking Status</th>
@@ -26,6 +28,15 @@
                 to
                 {{ booking.trek.end_date.strftime('%d-%m-%Y') if booking.trek.end_date else 'TBD' }}
             </td>
+            <td>{{ booking.trek.assigned_staff.name if booking.trek.assigned_staff else 'Not assigned' }}</td>
+            <td>
+                {% if booking.trek.assigned_staff and booking.trek.assigned_staff.staff_profile %}
+                {{ booking.trek.assigned_staff.staff_profile.contact_number }}
+                {% else %}
+                N/A
+                {% endif %}
+                </td>
+
             <td>{{ booking.booking_date.strftime('%d-%m-%Y') }}</td>
             <td>{{ booking.trek.status }}</td>
             <td>{{ booking.status }}</td>

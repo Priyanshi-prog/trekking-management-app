@@ -3,7 +3,9 @@
 
 {% block content %}
 <h2>Admin Dashboard</h2>
-<p>Welcome, {{ current_user.name }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+<p>Welcome, {{ current_user.name }}
+    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-dark ms-2">Logout</a>
+</p>
 
 <p><a href="{{ url_for('manage_treks') }}" class="btn btn-secondary">Manage Treks</a></p>
 

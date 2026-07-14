@@ -472,15 +472,16 @@ def trekker_dashboard():
 
     my_bookings = Booking.query.filter_by(user_id=current_user.id).all()
     booked_trek_ids = [b.trek_id for b in my_bookings if b.status == 'Booked']
+    cancelled_trek_ids = [b.trek_id for b in my_bookings if b.status == 'Cancelled']
 
     return render_template(
         'trekker_dashboard.html',
         available_treks=available_treks,
         booked_trek_ids=booked_trek_ids,
+        cancelled_trek_ids=cancelled_trek_ids,
         difficulty_filter=difficulty_filter,
         location_filter=location_filter
     )
-
 
 @app.route('/book-trek/<int:trek_id>', methods=['POST'])
 @login_required
@@ -500,11 +501,14 @@ def book_trek(trek_id):
         return redirect(url_for('trekker_dashboard'))
 
     existing_booking = Booking.query.filter_by(
-        user_id=current_user.id, trek_id=trek.id, status='Booked'
+        user_id=current_user.id, trek_id=trek.id
     ).first()
 
     if existing_booking:
-        flash('You have already booked this trek.', 'warning')
+        if existing_booking.status == 'Booked':
+            flash('You have already booked this trek.', 'warning')
+        elif existing_booking.status == 'Cancelled':
+            flash('You previously cancelled this trek and cannot book it again.', 'danger')
         return redirect(url_for('trekker_dashboard'))
 
     new_booking = Booking(

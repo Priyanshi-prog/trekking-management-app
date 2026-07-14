@@ -3,10 +3,12 @@
 
 {% block content %}
 <h2>Trekker Dashboard</h2>
-<p>Welcome, {{ current_user.name }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+<p>Welcome, {{ current_user.name }}
+    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-dark ms-2">Logout</a>
+</p>
 <p>
-    <a href="{{ url_for('edit_profile') }}">Edit Profile</a> |
-    <a href="{{ url_for('my_bookings') }}">My Bookings & History</a>
+    <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-secondary">Edit Profile</a>
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-sm btn-secondary">My Bookings & History</a>
 </p>
 
 <h4>Available Treks</h4>
@@ -55,13 +57,15 @@
             <td>
                 {% if trek.id in booked_trek_ids %}
                     <span class="text-muted">Already Booked</span>
+                {% elif trek.id in cancelled_trek_ids %}
+                    <span class="text-danger">Cannot Re-book</span>
                 {% elif trek.available_slots <= 0 %}
                     <span class="text-danger">Full</span>
                 {% else %}
-                <form method="POST" action="{{ url_for('book_trek', trek_id=trek.id) }}">
-                    <button type="submit" class="btn btn-sm btn-success">Book</button>
-                </form>
-                {% endif %}
+<form method="POST" action="{{ url_for('book_trek', trek_id=trek.id) }}">
+    <button type="submit" class="btn btn-sm btn-success">Book</button>
+</form>
+{% endif %}
             </td>
         </tr>
         {% endfor %}

@@ -2,10 +2,14 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h2>Welcome to the Trekking Management App</h2>
-<p>
-    Register as a <a href="{{ url_for('register') }}">Trekker</a>
-    or <a href="{{ url_for('register_staff') }}">Trek Staff</a>.
-</p>
-<p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+<div class="text-center mt-5">
+    <h1>Welcome</h1>
+    <p class="lead">Plan, book, and manage treks — all in one place.</p>
+
+    <div class="mt-4">
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-2">Register as Trekker</a>
+        <a href="{{ url_for('register_staff') }}" class="btn btn-secondary btn-lg me-2">Register as Trek Staff</a>
+        <a href="{{ url_for('login') }}" class="btn btn-outline-dark btn-lg">Login</a>
+    </div>
+</div>
 {% endblock %}

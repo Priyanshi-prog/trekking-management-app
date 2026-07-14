@@ -1,0 +1,58 @@
+:root {
+    --color-sand: #EDE6D6;
+    --color-bark: #3B342A;
+    --color-moss: #5C6B4F;
+    --color-clay: #A65E2E;
+    --color-card: #FAF6EE;
+}
+
+body {
+    background-color: var(--color-sand);
+    color: var(--color-bark);
+}
+
+.navbar {
+    background-color: var(--color-bark) !important;
+}
+
+.navbar-brand {
+    color: var(--color-sand) !important;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: var(--color-moss);
+    border-color: var(--color-moss);
+}
+
+.btn-primary:hover {
+    background-color: #4a573f;
+    border-color: #4a573f;
+}
+
+.btn-secondary {
+    background-color: var(--color-clay);
+    border-color: var(--color-clay);
+}
+
+.btn-secondary:hover {
+    background-color: #8a4e26;
+    border-color: #8a4e26;
+}
+
+.card {
+    background-color: var(--color-card);
+}
+
+.table {
+    --bs-table-bg: var(--color-card);
+}
+
+a {
+    color: var(--color-clay);
+}
+
+.container h2 {
+    color: var(--color-bark);
+    font-weight: 600;
+}
