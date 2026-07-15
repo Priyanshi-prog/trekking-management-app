@@ -18,7 +18,7 @@ workflow for three roles: **Admin**, **Trek Staff**, and **Users (Trekkers)**.
 ## Roles
 
 - **Admin**: pre-created superuser; manages treks, staff, users, and bookings.
-- **Trek Staff**: registers and logs in (requires admin approval); manages assigned treks.
+- **Trek Staff**: registers and logs in (requires admin approval), manages assigned treks.
 - **User (Trekker)**: registers, browses/books treks, tracks booking and trek history.
 
 ## Project Structure
@@ -51,6 +51,7 @@ trekking-management-app/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
+
 ```
 
 
